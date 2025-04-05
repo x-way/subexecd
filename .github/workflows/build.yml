@@ -1,0 +1,22 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  lint-and-build:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Lint
+        if: matrix.platform == 'ubuntu-latest'
+        run: make lint
+      - name: Build
+        run: make build
