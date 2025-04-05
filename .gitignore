@@ -1,3 +1,5 @@
 subexecd
+subexecd.aarch64
+subexecd.amd64
 subexecd.json
 restart_subexecd.sh
