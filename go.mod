@@ -1,6 +1,6 @@
 module github.com/x-way/subexecd
 
-go 1.23.0
+go 1.23.8
 
 require github.com/redis/go-redis/v9 v9.7.3
 
