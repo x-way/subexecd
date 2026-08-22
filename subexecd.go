@@ -91,7 +91,7 @@ func main() {
 	cancel()
 
 	sub := client.Subscribe(context.Background(), cfg.RedisChannel)
-	defer sub.Close()
+	defer func() { _ = sub.Close() }()
 
 	ch := sub.Channel()
 
