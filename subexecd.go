@@ -61,11 +61,11 @@ func runExec(e Exec) error {
 	ctx, cancel := context.WithTimeout(context.Background(), e.Timeout.Duration)
 	defer cancel()
 
-	return exec.CommandContext(ctx, e.Cmd, e.Args...).Run()
+	return exec.CommandContext(ctx, e.Cmd, e.Args...).Run() // #nosec G204 -- Cmd/Args come from the local config file, not from the incoming request
 }
 
 func loadConfig(configfile string) {
-	data, err := os.ReadFile(configfile)
+	data, err := os.ReadFile(configfile) // #nosec G304 -- path supplied via -f CLI flag, not attacker-controlled
 	if err != nil {
 		log.Fatal(err)
 	}
