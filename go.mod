@@ -2,7 +2,7 @@ module github.com/x-way/subexecd
 
 go 1.27.0
 
-require github.com/redis/go-redis/v9 v9.22.0
+require github.com/redis/go-redis/v9 v9.23.0
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
