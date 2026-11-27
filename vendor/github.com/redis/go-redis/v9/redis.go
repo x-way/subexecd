@@ -2126,8 +2126,6 @@ func classifyCommandError(err error) (errorType, statusCode string, isInternal b
 		return ErrorTypeNil, ErrorTypeNil, false
 	}
 
-	errStr := err.Error()
-
 	// Check for timeout errors
 	if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 		return "TIMEOUT", "TIMEOUT", true
@@ -2148,7 +2146,10 @@ func classifyCommandError(err error) (errorType, statusCode string, isInternal b
 
 	// Check for Redis errors
 	// Examples: "ERR ...", "WRONGTYPE ...", "CLUSTERDOWN ..."
-	if len(errStr) > 0 {
+	// Only a server reply has a prefix: io.EOF reads "EOF" but is not one.
+	var redisErr Error
+	if errors.As(err, &redisErr) {
+		errStr := redisErr.Error()
 		// Find the first space to extract the prefix
 		spaceIdx := 0
 		for i, c := range errStr {
@@ -3191,12 +3192,8 @@ func NewClient(opt *Options) *Client {
 
 	c.initStreamingCredentials()
 
-	// Create metadata independently of CSC. The zero config reuses the package
-	// default without allocating a store.
+	// Cluster node clients share their parent's metadata without owning a store.
 	c.baseClient.metadataSource = opt.cscMetadataSource
-	if c.baseClient.metadataSource == nil {
-		c.baseClient.cmdMeta = newCommandMetadataStore(opt.CommandMetadata, c.fetchCommandMetadata)
-	}
 
 	// CSC wiring (SharedTracking): shared cache + per-connection CLIENT TRACKING +
 	// background drainer. attachCSC is the strategy dispatch entry.

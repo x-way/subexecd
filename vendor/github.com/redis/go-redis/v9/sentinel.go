@@ -652,6 +652,11 @@ func setupFailoverConnParams(u *url.URL, o *FailoverOptions) (*FailoverOptions, 
 // NewFailoverClient returns a Redis client that uses Redis Sentinel
 // for automatic failover. It's safe for concurrent use by multiple
 // goroutines.
+//
+// Unlike NewFailoverClusterClient, it does not support RouteByLatency or
+// RouteRandomly (setting either panics); prefer it when replica routing
+// is not needed, as it avoids the extra overhead of the ClusterClient's
+// hash-slot calculation.
 // Passing nil FailoverOptions will cause a panic.
 func NewFailoverClient(failoverOpt *FailoverOptions) *Client {
 	if failoverOpt == nil {
@@ -1376,7 +1381,7 @@ func (c *sentinelFailover) setSentinel(ctx context.Context, sentinel *SentinelCl
 	c.sentinel = sentinel
 	c.discoverSentinels(ctx)
 
-	c.pubsub = sentinel.Subscribe(ctx, "+switch-master", "+replica-reconf-done")
+	c.pubsub = sentinel.Subscribe(ctx, "+switch-master", "+slave-reconf-done")
 	go c.listen(c.pubsub)
 }
 
@@ -1435,6 +1440,14 @@ func (c *sentinelFailover) listen(pubsub *PubSub) {
 
 // NewFailoverClusterClient returns a client that supports routing read-only commands
 // to a replica node.
+//
+// It is safe to use with a non-cluster Sentinel setup: the client handles
+// master/replica role changes on Sentinel-triggered failover (via the
+// +switch-master event), and the internal hash-slot calculation does not
+// interfere with routing, as all nodes are configured to handle all
+// slots. Prefer it over NewFailoverClient when RouteByLatency or
+// RouteRandomly is needed; otherwise prefer NewFailoverClient to avoid the
+// ClusterClient's extra overhead.
 // Passing nil FailoverOptions will cause a panic.
 func NewFailoverClusterClient(failoverOpt *FailoverOptions) *ClusterClient {
 	if failoverOpt == nil {
